@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"google-authenticator/internal/platform"
-	"google-authenticator/internal/systray"
+	"google-authenticator/internal/tray"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/menu"
@@ -120,7 +120,7 @@ func main() {
 	fileMenu.AddText("退出", keys.CmdOrCtrl("Q"), func(_ *menu.CallbackData) {
 		app.CloseDB()
 		releaseLock()
-		systray.Quit()
+		tray.Quit()
 		os.Exit(0)
 	})
 

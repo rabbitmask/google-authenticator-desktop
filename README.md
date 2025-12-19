@@ -85,6 +85,21 @@
 
 ---
 
+## 平台支持
+
+| 平台 | 系统托盘 | 说明 |
+|------|:--------:|------|
+| **Windows** | ✅ | 完整系统托盘支持 |
+| **Linux** | ✅ | 完整系统托盘支持 |
+| **macOS** | ➖ | 使用 Dock 图标（关闭窗口隐藏到 Dock，点击 Dock 图标重新显示） |
+
+> **macOS 说明**：由于 Wails 框架与第三方系统托盘库存在符号冲突，macOS 版采用原生 Dock 操作体验：
+> - 点击关闭按钮 → 隐藏窗口（应用不退出）
+> - 点击 Dock 图标 → 显示窗口
+> - `Cmd+Q` 或菜单「文件 → 退出」→ 完全退出应用
+
+---
+
 ## 快速开始
 
 ### 从源码构建
@@ -116,9 +131,14 @@ wails build
 
 ```
 google-authenticator/
-├── main.go                 # 入口 + 系统托盘
+├── main.go                 # 主入口 + 菜单
 ├── app.go                  # 后端 API
+├── tray_desktop.go         # 系统托盘 (Windows/Linux)
+├── tray_darwin.go          # 系统托盘 (macOS 空实现)
 ├── internal/
+│   ├── platform/           # 平台特定实现
+│   │   ├── platform_windows.go  # Windows (消息框、进程检测、图标)
+│   │   └── platform_unix.go     # macOS/Linux
 │   ├── storage/            # 数据存储层
 │   │   ├── database.go     # SQLite 操作
 │   │   └── crypto.go       # AES-256-GCM + Argon2id

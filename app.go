@@ -12,7 +12,7 @@ import (
 	"google-authenticator/internal/otp"
 	"google-authenticator/internal/qrcode"
 	"google-authenticator/internal/storage"
-	"google-authenticator/internal/systray"
+	"google-authenticator/internal/tray"
 
 	"github.com/google/uuid"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -57,13 +57,10 @@ func (a *App) startup(ctx context.Context) {
 	// 如果有密码保护，等待前端调用 Unlock
 
 	// 启动系统托盘
-	go systray.Init(systray.Callbacks{
-		OnShowWindow: a.ShowWindow,
-		OnQuit: func() {
-			a.CloseDB()
-			releaseLock()
-			os.Exit(0)
-		},
+	go tray.Init(a.ShowWindow, func() {
+		a.CloseDB()
+		releaseLock()
+		os.Exit(0)
 	})
 }
 
@@ -83,7 +80,7 @@ func (a *App) shutdown(_ context.Context) {
 		}
 	}
 	// 退出系统托盘
-	systray.Quit()
+	tray.Quit()
 }
 
 // ShowWindow 显示窗口
