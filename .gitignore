@@ -1,0 +1,34 @@
+# ===== Wails 构建输出 =====
+build/bin/
+frontend/dist/
+*.exe
+
+# ===== 用户数据（加密数据库）=====
+data/
+
+# ===== 前端依赖 =====
+frontend/node_modules/
+
+# ===== Wails 生成的绑定文件 =====
+# 这些文件由 wails dev/build 自动生成
+frontend/wailsjs/
+
+# ===== IDE 配置 =====
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ===== 系统文件 =====
+.DS_Store
+Thumbs.db
+
+# ===== 日志和临时文件 =====
+*.log
+*.tmp
+*.bak
+
+# ===== 测试和调试 =====
+*.test
+coverage/

@@ -1,0 +1,111 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # 推送 v1.0.0 格式的 tag 时触发
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows/amd64
+            output: google-authenticator.exe
+            artifact: Google-Authenticator-Windows-x64.exe
+          - os: macos-latest
+            platform: darwin/amd64
+            output: google-authenticator
+            artifact: Google-Authenticator-macOS-Intel.app.zip
+          - os: macos-latest
+            platform: darwin/arm64
+            output: google-authenticator
+            artifact: Google-Authenticator-macOS-AppleSilicon.app.zip
+          - os: ubuntu-latest
+            platform: linux/amd64
+            output: google-authenticator
+            artifact: Google-Authenticator-Linux-x64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Linux 依赖
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+
+      # 安装 Wails
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      # 构建
+      - name: Build
+        run: wails build -platform ${{ matrix.platform }}
+
+      # Windows: 直接上传 exe
+      - name: Prepare Windows artifact
+        if: matrix.os == 'windows-latest'
+        run: |
+          copy build\bin\${{ matrix.output }} ${{ matrix.artifact }}
+
+      # macOS: 打包 .app 为 zip
+      - name: Prepare macOS artifact
+        if: matrix.os == 'macos-latest'
+        run: |
+          cd build/bin
+          zip -r ../../${{ matrix.artifact }} *.app
+
+      # Linux: 直接复制
+      - name: Prepare Linux artifact
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cp build/bin/${{ matrix.output }} ${{ matrix.artifact }}
+          chmod +x ${{ matrix.artifact }}
+
+      # 上传构建产物
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
+
+  # 创建 Release 并上传所有文件
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display artifacts
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
