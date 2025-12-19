@@ -46,12 +46,12 @@ jobs:
         with:
           node-version: '20'
 
-      # Linux 依赖
+      # Linux 依赖 (Ubuntu 24.04 使用 WebKit 4.1)
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
 
       # 安装 Wails
       - name: Install Wails
@@ -59,7 +59,13 @@ jobs:
 
       # 构建
       - name: Build
-        run: wails build -platform ${{ matrix.platform }}
+        run: |
+          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+            wails build -platform ${{ matrix.platform }} -tags webkit2_41
+          else
+            wails build -platform ${{ matrix.platform }}
+          fi
+        shell: bash
 
       # Windows: 直接上传 exe
       - name: Prepare Windows artifact
