@@ -12,6 +12,7 @@ import (
 	"google-authenticator/internal/otp"
 	"google-authenticator/internal/qrcode"
 	"google-authenticator/internal/storage"
+	"google-authenticator/internal/systray"
 
 	"github.com/google/uuid"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -56,7 +57,14 @@ func (a *App) startup(ctx context.Context) {
 	// 如果有密码保护，等待前端调用 Unlock
 
 	// 启动系统托盘
-	go initSystray()
+	go systray.Init(systray.Callbacks{
+		OnShowWindow: a.ShowWindow,
+		OnQuit: func() {
+			a.CloseDB()
+			releaseLock()
+			os.Exit(0)
+		},
+	})
 }
 
 // beforeClose 关闭时始终最小化到托盘
@@ -66,13 +74,16 @@ func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 }
 
 // shutdown 应用退出时调用
-func (a *App) shutdown(ctx context.Context) {
+func (a *App) shutdown(_ context.Context) {
 	// 关闭数据库
 	if a.db != nil {
-		a.db.Close()
+		err := a.db.Close()
+		if err != nil {
+			return
+		}
 	}
-	// 退出系统托盘（会触发 onSystrayExit -> os.Exit）
-	quitSystray()
+	// 退出系统托盘
+	systray.Quit()
 }
 
 // ShowWindow 显示窗口
@@ -95,7 +106,10 @@ func (a *App) QuitApp() {
 // CloseDB 关闭数据库连接
 func (a *App) CloseDB() {
 	if a.db != nil {
-		a.db.Close()
+		err := a.db.Close()
+		if err != nil {
+			return
+		}
 	}
 }
 

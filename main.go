@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"google-authenticator/internal/platform"
+	"google-authenticator/internal/systray"
 
-	"github.com/energye/systray"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/menu"
 	"github.com/wailsapp/wails/v2/pkg/menu/keys"
@@ -60,7 +60,10 @@ func acquireLock() bool {
 			}
 		}
 		// 进程已退出，删除残留锁文件
-		os.Remove(lockFilePath)
+		err := os.Remove(lockFilePath)
+		if err != nil {
+			return false
+		}
 	}
 
 	// 创建锁文件，写入当前 PID
@@ -75,7 +78,10 @@ func acquireLock() bool {
 // releaseLock 释放单实例锁
 func releaseLock() {
 	if lockFilePath != "" {
-		os.Remove(lockFilePath)
+		err := os.Remove(lockFilePath)
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -160,58 +166,4 @@ func main() {
 	if err != nil {
 		println("Error:", err.Error())
 	}
-}
-
-// initSystray 初始化系统托盘（在 Wails 启动后调用）
-func initSystray() {
-	systray.Run(onSystrayReady, onSystrayExit)
-}
-
-// quitSystray 退出系统托盘
-func quitSystray() {
-	systray.Quit()
-}
-
-// onSystrayReady 系统托盘初始化
-func onSystrayReady() {
-	systray.SetIcon(platform.TrayIcon)
-	systray.SetTitle("Google Authenticator")
-	systray.SetTooltip("Google Authenticator - 双因素验证")
-
-	mShow := systray.AddMenuItem("显示主窗口", "显示应用程序窗口")
-	systray.AddSeparator()
-	mQuit := systray.AddMenuItem("退出", "完全退出应用程序")
-
-	mShow.Click(func() {
-		app.ShowWindow()
-	})
-
-	mQuit.Click(func() {
-		// 关闭数据库
-		app.CloseDB()
-		// 释放锁
-		releaseLock()
-		// 退出托盘
-		systray.Quit()
-		// 强制退出进程
-		os.Exit(0)
-	})
-
-	// 左键点击托盘图标
-	systray.SetOnClick(func(menu systray.IMenu) {
-		app.ShowWindow()
-	})
-
-	// 双击托盘图标
-	systray.SetOnDClick(func(menu systray.IMenu) {
-		app.ShowWindow()
-	})
-
-	// 右键点击显示菜单（默认行为，无需额外设置）
-}
-
-func onSystrayExit() {
-	// 释放锁并退出进程
-	releaseLock()
-	os.Exit(0)
 }
