@@ -2,8 +2,11 @@
 
 一款安全、开源的桌面端双因素认证器，**完整兼容 Google Authenticator 迁移协议**。
 
+另外新增root版本发布，**即不安全版本，将开放重编辑功能，甚至获取原始密钥，请酌情使用**。
+
 ![img.png](imgs/login.png)
 ![img.png](imgs/dashboard.png)
+![img.png](imgs/root.png)
 ---
 
 ## 设计背景

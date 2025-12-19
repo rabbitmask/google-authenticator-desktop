@@ -621,6 +621,66 @@ func (a *App) UpdateAccountsGroup(accountIDs []string, group string) int {
 	return count
 }
 
+// UpdateAccount 更新账户基础信息（账户名、发行者、分组）
+func (a *App) UpdateAccount(accountID, name, issuer, group string) bool {
+	if a.db == nil {
+		return false
+	}
+
+	acc, err := a.db.GetAccount(accountID)
+	if err != nil || acc == nil {
+		return false
+	}
+
+	// 只更新基础字段
+	acc.Name = name
+	acc.Issuer = issuer
+	acc.Group = group
+
+	return a.db.SaveAccount(*acc) == nil
+}
+
+// UpdateAccountAdvanced 更新账户高级选项（算法、位数、周期）
+// 警告：修改这些参数会导致生成的验证码改变
+func (a *App) UpdateAccountAdvanced(accountID, algorithm string, digits, period int) bool {
+	if a.db == nil {
+		return false
+	}
+
+	acc, err := a.db.GetAccount(accountID)
+	if err != nil || acc == nil {
+		return false
+	}
+
+	// 更新高级选项
+	acc.Algorithm = algorithm
+	acc.Digits = digits
+	acc.Period = period
+
+	return a.db.SaveAccount(*acc) == nil
+}
+
+// GetAccountSecret 获取账户密钥明文（需要密码验证）
+func (a *App) GetAccountSecret(accountID, password string) string {
+	if a.db == nil {
+		return ""
+	}
+
+	// 如果启用了密码保护，必须验证密码
+	if a.db.HasPassword() {
+		if !a.db.VerifyPassword(password) {
+			return ""
+		}
+	}
+
+	acc, err := a.db.GetAccount(accountID)
+	if err != nil || acc == nil {
+		return ""
+	}
+
+	return acc.Secret
+}
+
 // GetGroups returns all unique group names
 func (a *App) GetGroups() []string {
 	if a.db == nil {

@@ -106,6 +106,9 @@
               :class="{ selected: selectedAccounts.includes(account.id) }"
               @click="toggleSelect(account.id)"
             >
+              <!-- 编辑按钮 -->
+              <el-icon class="edit-btn" @click.stop="openEditDialog(account)"><Edit /></el-icon>
+
               <div class="account-left">
                 <div class="account-icon">🔵</div>
                 <div class="account-info">
@@ -181,35 +184,49 @@
     </el-dialog>
 
     <!-- 手动添加账户 -->
-    <el-dialog v-model="addDialogVisible" title="手动添加账户" width="480px" align-center>
-      <el-form :model="newAccount" label-width="80px">
+    <el-dialog v-model="addDialogVisible" title="添加账户" width="480px" align-center>
+      <el-form label-width="80px">
         <el-form-item label="账户名" required>
-          <el-input v-model="newAccount.name" placeholder="例如: user@example.com" />
+          <el-input v-model="newAccount.name" placeholder="user@example.com" />
         </el-form-item>
         <el-form-item label="发行者">
-          <el-input v-model="newAccount.issuer" placeholder="例如: Google, GitHub" />
-        </el-form-item>
-        <el-form-item label="密钥" required>
-          <el-input v-model="newAccount.secret" placeholder="Base32 编码密钥" />
+          <el-input v-model="newAccount.issuer" placeholder="Google" />
         </el-form-item>
         <el-form-item label="分组">
-          <el-select v-model="newAccount.group" placeholder="选择分组" clearable style="width: 100%">
+          <el-select v-model="newAccount.group" placeholder="请选择分组" clearable style="width: 100%">
+            <el-option label="未分组" value="" />
             <el-option v-for="g in groups" :key="g" :label="g" :value="g" />
           </el-select>
         </el-form-item>
-        <el-form-item label="算法">
-          <el-select v-model="newAccount.algorithm" style="width: 100%">
-            <el-option label="SHA1 (默认)" value="SHA1" />
-            <el-option label="SHA256" value="SHA256" />
-            <el-option label="SHA512" value="SHA512" />
-          </el-select>
+        <el-divider />
+        <el-form-item label="密钥" required>
+          <el-input v-model="newAccount.secret" placeholder="Base32 编码密钥（必填）" />
         </el-form-item>
-        <el-form-item label="位数">
-          <el-radio-group v-model="newAccount.digits">
-            <el-radio :value="6">6 位</el-radio>
-            <el-radio :value="8">8 位</el-radio>
-          </el-radio-group>
-        </el-form-item>
+        <el-collapse v-model="addAdvancedVisible">
+          <el-collapse-item title="⚙️ 高级选项" name="advanced">
+            <el-alert type="info" :closable="false" show-icon style="margin-bottom: 16px">
+              非必需，默认值适用于大多数情况
+            </el-alert>
+            <el-form-item label="算法">
+              <el-select v-model="newAccount.algorithm" style="width: 100%">
+                <el-option label="SHA1" value="SHA1" />
+                <el-option label="SHA256" value="SHA256" />
+                <el-option label="SHA512" value="SHA512" />
+                <el-option label="MD5" value="MD5" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="位数">
+              <el-select v-model="newAccount.digits" style="width: 100%">
+                <el-option :value="6" label="6 位" />
+                <el-option :value="8" label="8 位" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="周期">
+              <el-input-number v-model="newAccount.period" :min="10" :max="120" :step="10" style="width: 100%" />
+              <span style="font-size: 12px; color: #999; margin-left: 8px">秒</span>
+            </el-form-item>
+          </el-collapse-item>
+        </el-collapse>
       </el-form>
       <template #footer>
         <el-button @click="addDialogVisible = false">取消</el-button>
@@ -365,6 +382,91 @@
       </template>
     </el-dialog>
 
+    <!-- 编辑账户 -->
+    <el-dialog v-model="editDialogVisible" title="编辑账户" width="480px" align-center>
+      <el-form label-width="80px">
+        <el-form-item label="账户名">
+          <el-input v-model="editAccount.name" placeholder="user@example.com" />
+        </el-form-item>
+        <el-form-item label="发行者">
+          <el-input v-model="editAccount.issuer" placeholder="Google" />
+        </el-form-item>
+        <el-form-item label="分组">
+          <el-select v-model="editAccount.group" placeholder="请选择分组" clearable style="width: 100%">
+            <el-option label="未分组" value="" />
+            <el-option v-for="g in groups" :key="g" :label="g" :value="g" />
+          </el-select>
+        </el-form-item>
+        <el-divider />
+        <el-form-item label="密钥">
+          <div style="display: flex; align-items: center; gap: 8px; width: 100%">
+            <el-input value="••••••••••••••••" disabled style="flex: 1" />
+            <el-button @click="viewSecretVisible = true">🔍 查看</el-button>
+          </div>
+        </el-form-item>
+        <el-collapse v-model="advancedVisible">
+          <el-collapse-item title="⚙️ 高级选项" name="advanced">
+            <el-alert type="warning" :closable="false" show-icon style="margin-bottom: 16px">
+              修改高级选项可能导致验证码错误，请谨慎操作
+            </el-alert>
+            <el-form-item label="算法">
+              <el-select v-model="editAccount.algorithm" style="width: 100%">
+                <el-option label="SHA1" value="SHA1" />
+                <el-option label="SHA256" value="SHA256" />
+                <el-option label="SHA512" value="SHA512" />
+                <el-option label="MD5" value="MD5" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="位数">
+              <el-select v-model="editAccount.digits" style="width: 100%">
+                <el-option :value="6" label="6 位" />
+                <el-option :value="8" label="8 位" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="周期">
+              <el-input-number v-model="editAccount.period" :min="10" :max="120" :step="10" style="width: 100%" />
+              <span style="font-size: 12px; color: #999; margin-left: 8px">秒</span>
+            </el-form-item>
+          </el-collapse-item>
+        </el-collapse>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveAccountEdit">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 查看密钥 -->
+    <el-dialog v-model="viewSecretVisible" title="⚠️ 查看敏感信息" width="400px" align-center>
+      <el-alert type="warning" :closable="false" show-icon style="margin-bottom: 16px">
+        密钥明文将显示，请确保四处无人
+      </el-alert>
+      <el-form v-if="!viewedSecret" label-width="80px">
+        <el-form-item label="密码">
+          <el-input
+            v-model="secretPassword"
+            type="password"
+            placeholder="请输入密码验证身份"
+            show-password
+            @keyup.enter="viewSecret"
+          />
+        </el-form-item>
+      </el-form>
+      <div v-else class="secret-view">
+        <el-form-item label="密钥">
+          <div style="display: flex; align-items: center; gap: 8px">
+            <el-input :value="viewedSecret" readonly style="font-family: monospace; font-size: 14px" />
+            <el-button @click="copySecret">📋 复制</el-button>
+          </div>
+        </el-form-item>
+      </div>
+      <template #footer>
+        <el-button v-if="!viewedSecret" @click="viewSecretVisible = false">取消</el-button>
+        <el-button v-if="!viewedSecret" type="primary" @click="viewSecret">查看</el-button>
+        <el-button v-else @click="closeSecretView">关闭</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 关于 -->
     <el-dialog v-model="aboutVisible" title="关于" width="360px" align-center>
       <div class="about-content">
@@ -382,7 +484,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus, Refresh, CopyDocument, ArrowDown } from '@element-plus/icons-vue'
+import { Search, Plus, Refresh, CopyDocument, ArrowDown, Edit } from '@element-plus/icons-vue'
 import {
   GetAllAccounts,
   GenerateCode,
@@ -393,6 +495,9 @@ import {
   DeleteAccounts,
   GetGroups,
   UpdateAccountsGroup,
+  UpdateAccount,
+  UpdateAccountAdvanced,
+  GetAccountSecret,
   GetSettings,
   SetTheme,
   EnablePassword,
@@ -442,6 +547,10 @@ const transferExportVisible = ref(false)
 const addGroupVisible = ref(false)
 const settingsVisible = ref(false)
 const aboutVisible = ref(false)
+const editDialogVisible = ref(false)
+const viewSecretVisible = ref(false)
+const advancedVisible = ref([])
+const addAdvancedVisible = ref([])
 
 // 导出相关
 const exportSelectedAccounts = ref([])
@@ -461,8 +570,24 @@ const newAccount = ref({
   secret: '',
   algorithm: 'SHA1',
   digits: 6,
+  period: 30,
   group: ''
 })
+
+// 编辑账户表单
+const editAccount = ref({
+  id: '',
+  name: '',
+  issuer: '',
+  group: '',
+  algorithm: 'SHA1',
+  digits: 6,
+  period: 30
+})
+
+// 查看密钥
+const secretPassword = ref('')
+const viewedSecret = ref('')
 
 // ========== 计算属性 ==========
 const filteredAccounts = computed(() => {
@@ -595,6 +720,97 @@ async function deleteSelected() {
   } catch {}
 }
 
+// 打开编辑对话框
+function openEditDialog(account) {
+  editAccount.value = {
+    id: account.id,
+    name: account.name,
+    issuer: account.issuer,
+    group: account.group || '',
+    algorithm: account.algorithm,
+    digits: account.digits,
+    period: account.period || 30
+  }
+  advancedVisible.value = []
+  editDialogVisible.value = true
+}
+
+// 保存账户编辑
+async function saveAccountEdit() {
+  try {
+    // 保存基础信息
+    const basicSuccess = await UpdateAccount(
+      editAccount.value.id,
+      editAccount.value.name,
+      editAccount.value.issuer,
+      editAccount.value.group
+    )
+
+    if (!basicSuccess) {
+      ElMessage.error('保存失败')
+      return
+    }
+
+    // 如果修改了高级选项，需要二次确认
+    if (advancedVisible.value.includes('advanced')) {
+      await ElMessageBox.confirm(
+        '确定要修改高级选项吗？这可能导致验证码错误',
+        '确认修改',
+        { type: 'warning' }
+      )
+
+      const advancedSuccess = await UpdateAccountAdvanced(
+        editAccount.value.id,
+        editAccount.value.algorithm,
+        editAccount.value.digits,
+        editAccount.value.period
+      )
+
+      if (!advancedSuccess) {
+        ElMessage.error('高级选项保存失败')
+        return
+      }
+    }
+
+    editDialogVisible.value = false
+    await loadAccounts()
+    ElMessage.success('保存成功')
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error('操作失败')
+    }
+  }
+}
+
+// 查看密钥
+async function viewSecret() {
+  try {
+    const secret = await GetAccountSecret(editAccount.value.id, secretPassword.value)
+    if (!secret) {
+      ElMessage.error('密码错误或账户不存在')
+      return
+    }
+    viewedSecret.value = secret
+    secretPassword.value = ''
+  } catch (e) {
+    ElMessage.error('获取密钥失败')
+  }
+}
+
+// 关闭密钥查看
+function closeSecretView() {
+  viewSecretVisible.value = false
+  viewedSecret.value = ''
+  secretPassword.value = ''
+}
+
+// 复制密钥
+function copySecret() {
+  navigator.clipboard.writeText(viewedSecret.value)
+  ElMessage.success('密钥已复制')
+}
+
+
 async function addAccountManual() {
   if (!newAccount.value.name || !newAccount.value.secret) {
     ElMessage.warning('请填写账户名和密钥')
@@ -609,14 +825,23 @@ async function addAccountManual() {
       newAccount.value.algorithm,
       'TOTP',
       newAccount.value.digits,
-      30,
+      newAccount.value.period,
       newAccount.value.group
     )
 
     if (result.success) {
       ElMessage.success('账户添加成功')
       addDialogVisible.value = false
-      newAccount.value = { name: '', issuer: '', secret: '', algorithm: 'SHA1', digits: 6, group: '' }
+      addAdvancedVisible.value = []
+      newAccount.value = {
+        name: '',
+        issuer: '',
+        secret: '',
+        algorithm: 'SHA1',
+        digits: 6,
+        period: 30,
+        group: ''
+      }
       await loadAccounts()
     } else {
       ElMessage.error(result.message)
@@ -1180,6 +1405,30 @@ watch(exportSelectedAccounts, (val) => {
   cursor: pointer;
   transition: all 0.2s;
   border: 2px solid transparent;
+  position: relative;
+}
+
+.edit-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 16px;
+  color: #909399;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s;
+  padding: 4px;
+  border-radius: 4px;
+  z-index: 10;
+}
+
+.account-item:hover .edit-btn {
+  opacity: 1;
+}
+
+.edit-btn:hover {
+  color: #409eff;
+  background: #ecf5ff;
 }
 
 .account-item:hover {
