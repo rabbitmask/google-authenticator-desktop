@@ -13,31 +13,54 @@ import (
 //go:embed appicon.png
 var TrayIcon []byte
 
-// ShowMessage 显示消息提示框（macOS/Linux）
+type ProcessMetadata struct {
+	PID        int
+	Executable string
+	StartedAt  int64
+}
+
+func SupportsSingleInstance() bool {
+	return false
+}
+
+func AcquireSingleInstance(_ string) bool {
+	return false
+}
+
+func ReleaseSingleInstance() {}
+
 func ShowMessage(title, message string) {
 	if runtime.GOOS == "darwin" {
-		script := fmt.Sprintf(`display dialog "%s" with title "%s" buttons {"确定"} default button "确定"`, message, title)
+		script := fmt.Sprintf(`display dialog "%s" with title "%s" buttons {"OK"} default button "OK"`, message, title)
 		exec.Command("osascript", "-e", script).Run()
-	} else {
-		if err := exec.Command("zenity", "--info", "--title="+title, "--text="+message).Run(); err != nil {
-			exec.Command("xmessage", "-center", message).Run()
-		}
+		return
+	}
+
+	if err := exec.Command("zenity", "--info", "--title="+title, "--text="+message).Run(); err != nil {
+		exec.Command("xmessage", "-center", message).Run()
 	}
 }
 
-// IsProcessRunning 检查进程是否存在（Unix）
 func IsProcessRunning(pid int) bool {
-	if pid <= 0 {
-		return false
-	}
 	if pid == os.Getpid() {
 		return false
+	}
+	_, ok := GetProcessMetadata(pid)
+	return ok
+}
+
+func GetProcessMetadata(pid int) (ProcessMetadata, bool) {
+	if pid <= 0 {
+		return ProcessMetadata{}, false
 	}
 
 	process, err := os.FindProcess(pid)
 	if err != nil {
-		return false
+		return ProcessMetadata{}, false
 	}
-	err = process.Signal(os.Signal(nil))
-	return err == nil
+	if err := process.Signal(os.Signal(nil)); err != nil {
+		return ProcessMetadata{}, false
+	}
+
+	return ProcessMetadata{PID: pid}, true
 }

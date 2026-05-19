@@ -401,7 +401,7 @@
         <el-form-item label="密钥">
           <div style="display: flex; align-items: center; gap: 8px; width: 100%">
             <el-input value="••••••••••••••••" disabled style="flex: 1" />
-            <el-button @click="viewSecretVisible = true">🔍 查看</el-button>
+            <el-button @click="openSecretDialog">🔍 查看</el-button>
           </div>
         </el-form-item>
         <el-collapse v-model="advancedVisible">
@@ -461,7 +461,7 @@
         </el-form-item>
       </div>
       <template #footer>
-        <el-button v-if="!viewedSecret" @click="viewSecretVisible = false">取消</el-button>
+        <el-button v-if="!viewedSecret" @click="closeSecretView">取消</el-button>
         <el-button v-if="!viewedSecret" type="primary" @click="viewSecret">查看</el-button>
         <el-button v-else @click="closeSecretView">关闭</el-button>
       </template>
@@ -733,6 +733,12 @@ function openEditDialog(account) {
   }
   advancedVisible.value = []
   editDialogVisible.value = true
+}
+
+function openSecretDialog() {
+  viewedSecret.value = ''
+  secretPassword.value = ''
+  viewSecretVisible.value = true
 }
 
 // 保存账户编辑
@@ -1170,7 +1176,9 @@ watch(exportSelectedAccounts, (val) => {
 .app-container {
   width: 100%;
   height: 100vh;
-  background: #f5f7fa;
+  background:
+    radial-gradient(circle at top left, rgba(194, 145, 59, 0.12), transparent 28%),
+    linear-gradient(180deg, #f7f2e8 0%, #efe7d8 100%);
   display: flex;
   flex-direction: column;
 }
@@ -1182,7 +1190,10 @@ watch(exportSelectedAccounts, (val) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(214, 170, 78, 0.22), transparent 26%),
+    radial-gradient(circle at 80% 15%, rgba(138, 162, 118, 0.18), transparent 24%),
+    linear-gradient(135deg, #20352f 0%, #14231f 55%, #101917 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1193,9 +1204,11 @@ watch(exportSelectedAccounts, (val) => {
   text-align: center;
   color: white;
   padding: 40px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
+  background: rgba(252, 247, 238, 0.08);
+  border: 1px solid rgba(231, 213, 178, 0.18);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(14px);
 }
 
 .lock-icon {
@@ -1220,12 +1233,20 @@ watch(exportSelectedAccounts, (val) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background:
+    radial-gradient(circle at top center, rgba(201, 156, 65, 0.18), transparent 24%),
+    linear-gradient(160deg, #f6efe3 0%, #efe5d2 46%, #e5d8c2 100%);
 }
 
 .welcome-content {
   text-align: center;
-  color: white;
+  color: #24352f;
+  padding: 56px 52px;
+  border: 1px solid rgba(92, 76, 45, 0.08);
+  border-radius: 28px;
+  background: rgba(255, 251, 245, 0.7);
+  box-shadow: 0 30px 80px rgba(68, 54, 30, 0.12);
+  backdrop-filter: blur(10px);
 }
 
 .welcome-icon {
@@ -1236,11 +1257,12 @@ watch(exportSelectedAccounts, (val) => {
 .welcome-content h1 {
   font-size: 36px;
   margin: 0 0 8px;
+  letter-spacing: 0.03em;
 }
 
 .subtitle {
   font-size: 18px;
-  opacity: 0.9;
+  color: rgba(36, 53, 47, 0.72);
   margin: 0 0 40px;
 }
 
@@ -1253,13 +1275,15 @@ watch(exportSelectedAccounts, (val) => {
 
 .welcome-actions .el-button {
   min-width: 160px;
-  height: 48px;
+  height: 52px;
   font-size: 16px;
+  font-weight: 700;
+  border-radius: 14px;
 }
 
 .welcome-tip {
   font-size: 14px;
-  opacity: 0.8;
+  color: rgba(36, 53, 47, 0.66);
 }
 
 /* ========== 主布局 ========== */
@@ -1276,8 +1300,10 @@ watch(exportSelectedAccounts, (val) => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  background: white;
-  border-bottom: 1px solid #e4e7ed;
+  background: rgba(255, 251, 245, 0.88);
+  border-bottom: 1px solid #ddd0bb;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(79, 61, 33, 0.05);
 }
 
 .toolbar-left {
@@ -1289,12 +1315,17 @@ watch(exportSelectedAccounts, (val) => {
 .toolbar-brand {
   font-size: 18px;
   font-weight: 600;
-  color: #303133;
+  color: #24352f;
   white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
 .toolbar-search {
   width: 280px;
+}
+
+.toolbar-search :deep(.el-input__wrapper) {
+  border-radius: 14px;
 }
 
 /* 主体区域 */
@@ -1307,8 +1338,8 @@ watch(exportSelectedAccounts, (val) => {
 /* 左侧分组栏 */
 .sidebar {
   width: 200px;
-  background: white;
-  border-right: 1px solid #e4e7ed;
+  background: rgba(255, 250, 243, 0.8);
+  border-right: 1px solid #ddd0bb;
   padding: 16px 0;
   overflow-y: auto;
 }
@@ -1316,8 +1347,9 @@ watch(exportSelectedAccounts, (val) => {
 .sidebar-title {
   padding: 0 16px 12px;
   font-size: 12px;
-  color: #909399;
+  color: #8b7961;
   font-weight: 500;
+  letter-spacing: 0.08em;
 }
 
 .group-item {
@@ -1326,16 +1358,18 @@ watch(exportSelectedAccounts, (val) => {
   padding: 10px 16px;
   cursor: pointer;
   transition: background 0.2s;
-  color: #303133;
+  color: #33463f;
+  border-left: 3px solid transparent;
 }
 
 .group-item:hover {
-  background: #f5f7fa;
+  background: rgba(194, 145, 59, 0.08);
 }
 
 .group-item.active {
-  background: #ecf5ff;
-  color: #409eff;
+  background: rgba(36, 53, 47, 0.08);
+  color: #25493e;
+  border-left-color: #b98133;
 }
 
 .group-icon {
@@ -1350,19 +1384,19 @@ watch(exportSelectedAccounts, (val) => {
 
 .group-count {
   font-size: 12px;
-  color: #909399;
-  background: #f0f2f5;
+  color: #7e6d58;
+  background: #efe4d1;
   padding: 2px 8px;
   border-radius: 10px;
 }
 
 .group-item.active .group-count {
-  background: #d9ecff;
-  color: #409eff;
+  background: #e5d3b4;
+  color: #8f5a1f;
 }
 
 .group-item.add-group {
-  color: #409eff;
+  color: #8f5a1f;
   margin-top: 8px;
 }
 
@@ -1379,13 +1413,13 @@ watch(exportSelectedAccounts, (val) => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  background: white;
-  border-bottom: 1px solid #e4e7ed;
+  background: rgba(255, 251, 245, 0.72);
+  border-bottom: 1px solid #ddd0bb;
 }
 
 .account-count {
   font-size: 14px;
-  color: #606266;
+  color: #6f6559;
 }
 
 /* 账户列表 */
@@ -1398,14 +1432,15 @@ watch(exportSelectedAccounts, (val) => {
 .account-item {
   display: flex;
   align-items: center;
-  background: white;
-  border-radius: 8px;
+  background: rgba(255, 251, 245, 0.82);
+  border-radius: 14px;
   padding: 16px 20px;
   margin-bottom: 12px;
   cursor: pointer;
   transition: all 0.2s;
-  border: 2px solid transparent;
+  border: 1px solid rgba(178, 154, 118, 0.18);
   position: relative;
+  box-shadow: 0 10px 30px rgba(78, 61, 35, 0.06);
 }
 
 .edit-btn {
@@ -1427,17 +1462,19 @@ watch(exportSelectedAccounts, (val) => {
 }
 
 .edit-btn:hover {
-  color: #409eff;
-  background: #ecf5ff;
+  color: #8f5a1f;
+  background: rgba(194, 145, 59, 0.12);
 }
 
 .account-item:hover {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 36px rgba(78, 61, 35, 0.12);
 }
 
 .account-item.selected {
-  border-color: #409eff;
-  background: #ecf5ff;
+  border-color: rgba(191, 134, 58, 0.55);
+  background: linear-gradient(180deg, rgba(255, 249, 238, 0.96) 0%, rgba(244, 232, 210, 0.96) 100%);
+  box-shadow: 0 18px 40px rgba(143, 90, 31, 0.12);
 }
 
 .account-left {
@@ -1459,7 +1496,7 @@ watch(exportSelectedAccounts, (val) => {
 .account-issuer {
   font-size: 16px;
   font-weight: 600;
-  color: #303133;
+  color: #24352f;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1468,13 +1505,13 @@ watch(exportSelectedAccounts, (val) => {
 .account-group {
   font-size: 13px;
   font-weight: 400;
-  color: #909399;
+  color: #8b7961;
   margin-left: 2px;
 }
 
 .account-name {
   font-size: 13px;
-  color: #909399;
+  color: #8b7961;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1485,10 +1522,13 @@ watch(exportSelectedAccounts, (val) => {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 8px;
+  background:
+    linear-gradient(135deg, #27443d 0%, #1f352f 55%, #172824 100%);
+  border: 1px solid rgba(226, 200, 151, 0.2);
+  border-radius: 12px;
   cursor: pointer;
   transition: transform 0.15s;
+  box-shadow: inset 0 1px 0 rgba(255, 248, 230, 0.08);
 }
 
 .account-center:hover {
@@ -1534,7 +1574,7 @@ watch(exportSelectedAccounts, (val) => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  background: #303133;
+  background: linear-gradient(90deg, #24352f 0%, #1a2723 100%);
   color: white;
 }
 
@@ -1545,6 +1585,10 @@ watch(exportSelectedAccounts, (val) => {
 .selection-actions {
   display: flex;
   gap: 10px;
+}
+
+.selection-actions .el-button {
+  border-radius: 12px;
 }
 
 .slide-up-enter-active,
@@ -1569,8 +1613,9 @@ watch(exportSelectedAccounts, (val) => {
 
 .dialog-buttons .el-button {
   width: 100%;
-  height: 48px;
+  height: 52px;
   font-size: 15px;
+  border-radius: 14px;
   margin: 0;
 }
 
@@ -1583,13 +1628,14 @@ watch(exportSelectedAccounts, (val) => {
 
 .add-choice-buttons .el-button {
   width: 100%;
-  height: 48px;
+  height: 52px;
   font-size: 15px;
+  border-radius: 14px;
   margin: 0;
 }
 
 .dialog-hint {
-  color: #909399;
+  color: #8b7961;
   font-size: 14px;
   margin-bottom: 20px;
   text-align: center;
@@ -1604,15 +1650,16 @@ watch(exportSelectedAccounts, (val) => {
 
 .scan-buttons .el-button {
   width: 100%;
-  height: 48px;
+  height: 52px;
   font-size: 15px;
+  border-radius: 14px;
   margin: 0;
 }
 
 /* 设置底部提示 */
 .setting-footer-hint {
   font-size: 12px;
-  color: #909399;
+  color: #8b7961;
 }
 
 .export-select-all {
@@ -1622,9 +1669,10 @@ watch(exportSelectedAccounts, (val) => {
 .export-account-list {
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
+  border: 1px solid #ddd0bb;
+  border-radius: 10px;
   padding: 12px;
+  background: rgba(255, 251, 245, 0.75);
 }
 
 .export-account-list .el-checkbox {
@@ -1643,7 +1691,7 @@ watch(exportSelectedAccounts, (val) => {
 }
 
 .export-qr-result p {
-  color: #606266;
+  color: #6f6559;
 }
 
 .about-content {
@@ -1659,16 +1707,16 @@ watch(exportSelectedAccounts, (val) => {
 .about-content h2 {
   margin: 0 0 4px;
   font-size: 22px;
-  color: #303133;
+  color: #24352f;
 }
 
 .version {
-  color: #909399;
+  color: #8b7961;
   margin: 0;
 }
 
 .copyright {
-  color: #c0c4cc;
+  color: #b4a48f;
   font-size: 12px;
 }
 
@@ -1680,7 +1728,7 @@ watch(exportSelectedAccounts, (val) => {
 
 .accounts-list::-webkit-scrollbar-thumb,
 .sidebar::-webkit-scrollbar-thumb {
-  background: #dcdfe6;
+  background: #cdbda5;
   border-radius: 3px;
 }
 </style>
@@ -1690,30 +1738,30 @@ watch(exportSelectedAccounts, (val) => {
 /* 浅色主题（默认） */
 :root,
 [data-theme="light"] {
-  --bg-primary: #f5f7fa;
-  --bg-secondary: #ffffff;
-  --bg-card: #ffffff;
-  --text-primary: #303133;
-  --text-secondary: #606266;
-  --text-muted: #909399;
-  --border-color: #e4e7ed;
-  --hover-bg: #f5f7fa;
-  --active-bg: #ecf5ff;
-  --active-color: #409eff;
+  --bg-primary: #efe7d8;
+  --bg-secondary: rgba(255, 251, 245, 0.88);
+  --bg-card: rgba(255, 251, 245, 0.82);
+  --text-primary: #24352f;
+  --text-secondary: #5d665f;
+  --text-muted: #8b7961;
+  --border-color: #ddd0bb;
+  --hover-bg: rgba(194, 145, 59, 0.08);
+  --active-bg: rgba(36, 53, 47, 0.08);
+  --active-color: #8f5a1f;
 }
 
 /* 深色主题 */
 [data-theme="dark"] {
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #16213e;
-  --bg-card: #1f2940;
-  --text-primary: #e4e6eb;
-  --text-secondary: #b0b3b8;
-  --text-muted: #8a8d91;
-  --border-color: #3a3f4b;
-  --hover-bg: #2d3548;
-  --active-bg: #1e3a5f;
-  --active-color: #58a6ff;
+  --bg-primary: #16211f;
+  --bg-secondary: #1d2b28;
+  --bg-card: #213330;
+  --text-primary: #f1e8d8;
+  --text-secondary: #d3c5b1;
+  --text-muted: #a99983;
+  --border-color: #314542;
+  --hover-bg: rgba(201, 156, 65, 0.12);
+  --active-bg: rgba(201, 156, 65, 0.16);
+  --active-color: #d6aa4e;
 }
 
 /* 应用主题变量 */
@@ -1768,7 +1816,7 @@ watch(exportSelectedAccounts, (val) => {
 }
 
 [data-theme="dark"] .account-item:hover {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.34);
 }
 
 [data-theme="dark"] .account-item.selected {
@@ -1806,5 +1854,129 @@ watch(exportSelectedAccounts, (val) => {
 
 [data-theme="dark"] .el-form-item__label {
   color: var(--text-secondary);
+}
+
+:deep(.el-button) {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+:deep(.el-button--primary) {
+  border-color: #8f5a1f;
+  background: linear-gradient(135deg, #a06a29 0%, #8f5a1f 58%, #764715 100%);
+  box-shadow: 0 10px 24px rgba(143, 90, 31, 0.22);
+}
+
+:deep(.el-button--primary:hover) {
+  border-color: #b98133;
+  background: linear-gradient(135deg, #b47831 0%, #9b6120 60%, #7e4d18 100%);
+}
+
+:deep(.el-button:not(.el-button--primary):not(.el-button--danger)) {
+  border-color: #d8cab3;
+  background: rgba(255, 250, 243, 0.88);
+  color: #41524b;
+}
+
+:deep(.el-button:not(.el-button--primary):not(.el-button--danger):hover) {
+  border-color: #c99c41;
+  color: #8f5a1f;
+  background: rgba(243, 234, 219, 0.92);
+}
+
+:deep(.el-button--danger) {
+  box-shadow: 0 10px 20px rgba(182, 84, 58, 0.18);
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-select__wrapper),
+:deep(.el-textarea__inner) {
+  background: rgba(255, 251, 245, 0.92);
+  box-shadow: 0 0 0 1px rgba(192, 173, 145, 0.5) inset;
+  border-radius: 12px;
+}
+
+:deep(.el-input__wrapper:hover),
+:deep(.el-select__wrapper:hover) {
+  box-shadow: 0 0 0 1px rgba(185, 129, 51, 0.5) inset;
+}
+
+:deep(.el-input__wrapper.is-focus),
+:deep(.el-select__wrapper.is-focused),
+:deep(.el-textarea__inner:focus) {
+  box-shadow: 0 0 0 1px #b98133 inset, 0 0 0 4px rgba(201, 156, 65, 0.14);
+}
+
+:deep(.el-dialog) {
+  border: 1px solid rgba(197, 176, 144, 0.45);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 252, 247, 0.98) 0%, rgba(249, 243, 234, 0.98) 100%);
+  box-shadow: 0 32px 80px rgba(56, 43, 21, 0.18);
+  overflow: hidden;
+}
+
+:deep(.el-dialog__header) {
+  margin-right: 0;
+  padding: 22px 24px 14px;
+  border-bottom: 1px solid rgba(214, 198, 172, 0.5);
+  background: rgba(255, 249, 241, 0.9);
+}
+
+:deep(.el-dialog__title) {
+  color: #24352f;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+:deep(.el-dialog__body) {
+  padding: 20px 24px;
+}
+
+:deep(.el-dialog__footer) {
+  padding: 14px 24px 22px;
+  border-top: 1px solid rgba(214, 198, 172, 0.42);
+  background: rgba(255, 250, 244, 0.78);
+}
+
+:deep(.el-divider__text),
+:deep(.el-form-item__label) {
+  color: #6f6559;
+}
+
+:deep(.el-radio__label),
+:deep(.el-checkbox__label) {
+  color: #41524b;
+}
+
+[data-theme="dark"] :deep(.el-button:not(.el-button--primary):not(.el-button--danger)) {
+  border-color: #3d4f49;
+  background: rgba(34, 50, 46, 0.92);
+  color: #e0d4c1;
+}
+
+[data-theme="dark"] :deep(.el-button:not(.el-button--primary):not(.el-button--danger):hover) {
+  border-color: #d6aa4e;
+  color: #f1e8d8;
+  background: rgba(52, 72, 66, 0.96);
+}
+
+[data-theme="dark"] :deep(.el-dialog) {
+  border-color: rgba(72, 95, 88, 0.8);
+  background: linear-gradient(180deg, rgba(28, 42, 39, 0.98) 0%, rgba(24, 35, 33, 0.98) 100%);
+  box-shadow: 0 36px 90px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] :deep(.el-dialog__header),
+[data-theme="dark"] :deep(.el-dialog__footer) {
+  background: rgba(30, 44, 40, 0.88);
+  border-color: rgba(72, 95, 88, 0.7);
+}
+
+[data-theme="dark"] :deep(.el-dialog__title),
+[data-theme="dark"] :deep(.el-divider__text),
+[data-theme="dark"] :deep(.el-radio__label),
+[data-theme="dark"] :deep(.el-checkbox__label) {
+  color: #f1e8d8;
 }
 </style>

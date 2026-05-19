@@ -59,7 +59,7 @@ func (a *App) startup(ctx context.Context) {
 	// 启动系统托盘
 	go tray.Init(a.ShowWindow, func() {
 		a.CloseDB()
-		releaseLock()
+		platform.ReleaseAppLock()
 		os.Exit(0)
 	})
 }
@@ -85,7 +85,11 @@ func (a *App) shutdown(_ context.Context) {
 
 // ShowWindow 显示窗口
 func (a *App) ShowWindow() {
-	runtime.Show(a.ctx)
+	if a.ctx == nil {
+		return
+	}
+	runtime.WindowShow(a.ctx)
+	runtime.WindowUnminimise(a.ctx)
 	runtime.WindowSetAlwaysOnTop(a.ctx, true)
 	runtime.WindowSetAlwaysOnTop(a.ctx, false)
 }
