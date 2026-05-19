@@ -10,6 +10,7 @@ import (
 
 	"google-authenticator/internal/migration"
 	"google-authenticator/internal/otp"
+	"google-authenticator/internal/platform"
 	"google-authenticator/internal/qrcode"
 	"google-authenticator/internal/storage"
 	"google-authenticator/internal/tray"
